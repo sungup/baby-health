@@ -39,7 +39,8 @@ enum PrescriptionPrompt {
     - 환자 이름, 주민등록번호, 보험/차트 번호, 연락처 등 개인 식별 정보는 절대 출력하지 마세요.
     - 이미지에 없는 내용은 추측하지 말고 null 로 두세요. 읽기 불확실한 부분은 warnings 에 적으세요.
     - dosage 는 "1회" 복용량이며 단위를 포함하세요 (예: "2.5ml", "1포", "0.5정").
-    - timing 은 복용 시점을 원문 그대로 짧게 적으세요 (예: "아침·저녁 식후 30분", "취침 전", "필요 시").
+    - timing 은 복용 시점을 아침/점심/저녁/취침 전, 식전/식후/식간, 분 단위 표현으로 적고, 한 약에 시점이 여럿이면 쉼표로 구분하세요 (예: "아침 식후 30분, 저녁 식후 30분", "취침 전", "필요 시").
+    - 식사나 취침과 무관한 시각/간격 지시(예: "8시간마다")만 있으면 timing 은 null 로 두고 intervalHours 에 간격(시간, 정수)을 적으세요.
     - timesPerDay 는 timing 과 일치하는 하루 복용 횟수(정수)입니다. "필요 시"처럼 정해지지 않았으면 null.
     - days 는 총 투약 일수(정수), prescribedDate 는 처방일(yyyy-MM-dd)입니다.
     - 처방된 약마다 medications 항목을 하나씩 만드세요.
@@ -54,6 +55,7 @@ enum PrescriptionPrompt {
           "dosage": "1회 용량 또는 null",
           "timesPerDay": 3,
           "timing": "복용 시점 또는 null",
+          "intervalHours": null,
           "days": 5,
           "reason": "효능/복용 사유 또는 null",
           "notes": "주의사항 또는 null"

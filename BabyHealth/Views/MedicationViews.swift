@@ -162,6 +162,9 @@ struct MedicationDetailView: View {
                 if !medication.timingNote.isEmpty {
                     LabeledContent("복용 시점", value: medication.timingNote)
                 }
+                if !medication.slots.isEmpty {
+                    LabeledContent("알람 기준", value: medication.slots.map { $0.value.label }.joined(separator: ", "))
+                }
                 LabeledContent("처방일", value: medication.prescribedDate.formatted(date: .abbreviated, time: .omitted))
                 if !medication.prescriber.isEmpty {
                     LabeledContent("처방 병원/의사", value: medication.prescriber)
@@ -233,21 +236,15 @@ struct AddMedicationView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
-    @State private var name = ""
-    @State private var dosage = ""
-    @State private var timesPerDay = 3
+    @State private var draft = MedicationDraft()
     @State private var prescribedDate = Date.now
     @State private var prescriber = ""
-    @State private var timingNote = ""
-    @State private var startDate = Date.now
-    @State private var hasEndDate = false
-    @State private var endDate = Date.now
-    @State private var reason = ""
-    @State private var notes = ""
+    @State private var startChoice = StartChoice()
 
     private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !dosage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !draft.dosage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && draft.schedule.isValid
     }
 
     var body: some View {
@@ -256,23 +253,25 @@ struct AddMedicationView: View {
                 Section("처방") {
                     DatePicker("처방일", selection: $prescribedDate, in: ...Date.now, displayedComponents: .date)
                     TextField("처방 병원/의사 (선택)", text: $prescriber)
-                    TextField("복용 사유 (선택)", text: $reason)
+                    TextField("복용 사유 (선택)", text: $draft.reason)
                 }
                 Section("약") {
-                    TextField("약 이름", text: $name)
-                    TextField("1회 용량 (예: 2.5ml)", text: $dosage)
-                    Stepper("하루 \(timesPerDay)회", value: $timesPerDay, in: 1...8)
-                    TextField("복용 시점 (예: 아침·저녁 식후)", text: $timingNote)
+                    TextField("약 이름", text: $draft.name)
+                    TextField("1회 용량 (예: 2.5ml)", text: $draft.dosage)
+                    TextField("복용 시점 메모 (선택)", text: $draft.timing)
+                }
+                Section("복용 스케줄") {
+                    DoseScheduleEditor(schedule: $draft.schedule)
                 }
                 Section("복용 기간") {
-                    DatePicker("시작일", selection: $startDate, displayedComponents: .date)
-                    Toggle("종료일 있음", isOn: $hasEndDate)
-                    if hasEndDate {
-                        DatePicker("종료일", selection: $endDate, in: startDate..., displayedComponents: .date)
-                    }
+                    TextField("투약 일수 (비우면 종료일 없음)", text: $draft.daysText)
+                        .keyboardType(.numberPad)
+                }
+                Section("투약 시작 시점") {
+                    StartChoiceEditor(choice: $startChoice, prescribedDate: prescribedDate)
                 }
                 Section {
-                    TextField("메모 (선택)", text: $notes, axis: .vertical)
+                    TextField("메모 (선택)", text: $draft.notes, axis: .vertical)
                 }
             }
             .navigationTitle("처방 추가")
@@ -290,20 +289,14 @@ struct AddMedicationView: View {
     }
 
     private func save() {
-        let medication = Medication(
-            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-            dosage: dosage.trimmingCharacters(in: .whitespacesAndNewlines),
-            timesPerDay: timesPerDay,
-            startDate: startDate,
-            endDate: hasEndDate ? endDate : nil,
-            reason: reason,
-            notes: notes,
+        let built = MedicationBuilder.make(
+            from: draft,
+            baby: baby,
             prescribedDate: prescribedDate,
             prescriber: prescriber,
-            timingNote: timingNote.trimmingCharacters(in: .whitespacesAndNewlines)
+            startChoice: startChoice
         )
-        context.insert(medication)
-        medication.baby = baby
+        MedicationBuilder.attach(built, to: baby) { context.insert($0) }
         dismiss()
     }
 }

@@ -29,13 +29,13 @@ struct PrescriptionScanView: View {
     @State private var errorMessage: String?
 
     @State private var prescribedDate = Date.now
-    @State private var startDate = Date.now
+    @State private var startChoice = StartChoice()
     @State private var prescriber = ""
     @State private var drafts: [MedicationDraft] = []
     @State private var warnings: [String] = []
 
     private var includedCount: Int {
-        drafts.filter { $0.include && !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }.count
+        drafts.filter { $0.include && $0.schedule.isValid && !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }.count
     }
 
     var body: some View {
@@ -209,7 +209,10 @@ struct PrescriptionScanView: View {
             Section("처방 정보") {
                 DatePicker("처방일", selection: $prescribedDate, in: ...Date.now, displayedComponents: .date)
                 TextField("처방 병원/의사", text: $prescriber)
-                DatePicker("복용 시작일", selection: $startDate, displayedComponents: .date)
+            }
+
+            Section("투약 시작 시점") {
+                StartChoiceEditor(choice: $startChoice, prescribedDate: prescribedDate)
             }
 
             ForEach($drafts) { $draft in
@@ -217,12 +220,12 @@ struct PrescriptionScanView: View {
                     Toggle("이 약 저장", isOn: $draft.include)
                     TextField("약 이름", text: $draft.name)
                     TextField("1회 용량 (예: 2.5ml)", text: $draft.dosage)
-                    Stepper("하루 \(draft.timesPerDay)회", value: $draft.timesPerDay, in: 1...8)
-                    TextField("복용 시점 (예: 아침·저녁 식후)", text: $draft.timing)
+                    TextField("복용 시점 원문 (예: 아침·저녁 식후)", text: $draft.timing)
                     TextField("투약 일수", text: $draft.daysText)
                         .keyboardType(.numberPad)
                     TextField("복용 사유", text: $draft.reason)
                     TextField("메모", text: $draft.notes, axis: .vertical)
+                    DoseScheduleEditor(schedule: $draft.schedule)
                 } header: {
                     Text(draft.name.isEmpty ? "약" : draft.name)
                 }
@@ -303,7 +306,6 @@ struct PrescriptionScanView: View {
 
         let date = min(PrescriptionImporter.parseDate(parsed.prescribedDate) ?? Date.now, Date.now)
         prescribedDate = date
-        startDate = date
         prescriber = parsed.prescriber ?? ""
         warnings = parsed.warnings
         drafts = newDrafts
@@ -311,15 +313,15 @@ struct PrescriptionScanView: View {
     }
 
     private func save() {
-        for draft in drafts where draft.include && !draft.name.trimmingCharacters(in: .whitespaces).isEmpty {
-            let medication = PrescriptionImporter.makeMedication(
+        for draft in drafts where draft.include && !draft.name.trimmingCharacters(in: .whitespaces).isEmpty && draft.schedule.isValid {
+            let built = MedicationBuilder.make(
                 from: draft,
+                baby: baby,
                 prescribedDate: prescribedDate,
-                startDate: startDate,
-                prescriber: prescriber
+                prescriber: prescriber,
+                startChoice: startChoice
             )
-            context.insert(medication)
-            medication.baby = baby
+            MedicationBuilder.attach(built, to: baby) { context.insert($0) }
         }
         dismiss()
     }

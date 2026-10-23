@@ -105,7 +105,7 @@ final class PrescriptionImporterTests: XCTestCase {
         let medication = PrescriptionImporter.makeMedication(
             from: makeDraft(days: "3"),
             prescribedDate: start,
-            startDate: start,
+            start: start,
             prescriber: " 행복소아과 ",
             calendar: calendar
         )
@@ -124,7 +124,7 @@ final class PrescriptionImporterTests: XCTestCase {
         let medication = PrescriptionImporter.makeMedication(
             from: makeDraft(days: ""),
             prescribedDate: start,
-            startDate: start,
+            start: start,
             prescriber: "",
             calendar: calendar
         )

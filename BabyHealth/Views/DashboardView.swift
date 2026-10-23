@@ -4,6 +4,7 @@ private enum DashboardSheet: Identifiable {
     case temperature
     case dose
     case apiKey
+    case alarms
 
     var id: Self { self }
 }
@@ -41,6 +42,7 @@ struct DashboardView: View {
             List {
                 profileSection
                 temperatureSection
+                todayScheduleSection
                 medicationSection
                 vaccinationSection
                 visitSection
@@ -59,10 +61,17 @@ struct DashboardView: View {
                     BabySwitcherMenu()
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        activeSheet = .apiKey
-                    } label: {
-                        Image(systemName: "key")
+                    HStack {
+                        Button {
+                            activeSheet = .alarms
+                        } label: {
+                            Image(systemName: "bell")
+                        }
+                        Button {
+                            activeSheet = .apiKey
+                        } label: {
+                            Image(systemName: "key")
+                        }
                     }
                 }
             }
@@ -74,6 +83,8 @@ struct DashboardView: View {
                     AddMedicationDoseView(baby: baby)
                 case .apiKey:
                     ConnectionSettingsView()
+                case .alarms:
+                    AlarmSettingsView(baby: baby)
                 }
             }
         }
@@ -116,6 +127,39 @@ struct DashboardView: View {
                 activeSheet = .temperature
             } label: {
                 Label("체온 입력", systemImage: "plus.circle")
+            }
+        }
+    }
+
+    /// 오늘 하루의 투약·식사 일정 (이미 지난 것 포함). 항목별/전체 공유 가능.
+    private var todayAlarms: [PlannedAlarm] {
+        let start = Calendar.current.startOfDay(for: .now)
+        return AlarmPlanner.plan(inputs: [AlarmBabyInput(baby: baby)], from: start, horizonDays: 1, limit: 50)
+    }
+
+    @ViewBuilder
+    private var todayScheduleSection: some View {
+        let alarms = todayAlarms
+        if !alarms.isEmpty {
+            Section("오늘의 투약 일정") {
+                ForEach(alarms) { alarm in
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(alarm.title).font(.subheadline)
+                            Text(alarm.body)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        ShareLink(item: alarm.shareText) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                ShareLink(item: alarms.map(\.shareText).joined(separator: "\n\n")) {
+                    Label("오늘 일정 전체 공유", systemImage: "square.and.arrow.up")
+                }
             }
         }
     }

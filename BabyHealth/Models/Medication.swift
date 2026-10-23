@@ -23,6 +23,10 @@ final class Medication {
     @Relationship(deleteRule: .cascade, inverse: \MedicationDose.medication)
     var doses: [MedicationDose] = []
 
+    /// 하루 중 투약 시점들. 비어 있으면(필요 시 복용 등) 알람이 울리지 않는다.
+    @Relationship(deleteRule: .cascade, inverse: \DoseSlot.medication)
+    var slots: [DoseSlot] = []
+
     init(
         name: String,
         dosage: String,
@@ -33,7 +37,8 @@ final class Medication {
         notes: String = "",
         prescribedDate: Date = .now,
         prescriber: String = "",
-        timingNote: String = ""
+        timingNote: String = "",
+        slots: [DoseSlotValue] = []
     ) {
         self.name = name
         self.dosage = dosage
@@ -45,6 +50,7 @@ final class Medication {
         self.prescribedDate = prescribedDate
         self.prescriber = prescriber
         self.timingNote = timingNote
+        self.slots = slots.map { DoseSlot($0) }
     }
 
     func isActive(asOf now: Date = .now, calendar: Calendar = .current) -> Bool {

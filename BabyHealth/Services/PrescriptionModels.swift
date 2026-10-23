@@ -37,11 +37,13 @@ struct ParsedMedication: Decodable {
     var timing: String?
     /// 총 투약 일수
     var days: Int?
+    /// 식사 기준이 없는 약의 투약 간격(시간). 예: "8시간마다" → 8
+    var intervalHours: Int?
     var reason: String?
     var notes: String?
 
     enum CodingKeys: String, CodingKey {
-        case name, dosage, timesPerDay, timing, days, reason, notes
+        case name, dosage, timesPerDay, timing, days, intervalHours, reason, notes
     }
 
     init(
@@ -50,6 +52,7 @@ struct ParsedMedication: Decodable {
         timesPerDay: Int? = nil,
         timing: String? = nil,
         days: Int? = nil,
+        intervalHours: Int? = nil,
         reason: String? = nil,
         notes: String? = nil
     ) {
@@ -58,6 +61,7 @@ struct ParsedMedication: Decodable {
         self.timesPerDay = timesPerDay
         self.timing = timing
         self.days = days
+        self.intervalHours = intervalHours
         self.reason = reason
         self.notes = notes
     }
@@ -69,6 +73,7 @@ struct ParsedMedication: Decodable {
         timesPerDay = Self.decodeInt(container, .timesPerDay)
         timing = try container.decodeIfPresent(String.self, forKey: .timing)
         days = Self.decodeInt(container, .days)
+        intervalHours = Self.decodeInt(container, .intervalHours)
         reason = try container.decodeIfPresent(String.self, forKey: .reason)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
     }
@@ -92,20 +97,46 @@ struct MedicationDraft: Identifiable {
     var include = true
     var name: String
     var dosage: String
-    var timesPerDay: Int
     var timing: String
     var daysText: String
     var reason: String
     var notes: String
+    var schedule: DoseScheduleDraft
 
-    init(parsed: ParsedMedication) {
+    /// 하루 복용 횟수는 스케줄에서 계산한다.
+    var timesPerDay: Int { schedule.timesPerDay }
+
+    init(parsed: ParsedMedication, now: Date = .now, calendar: Calendar = .current) {
         name = parsed.name.trimmingCharacters(in: .whitespacesAndNewlines)
         dosage = parsed.dosage ?? ""
-        timesPerDay = min(max(parsed.timesPerDay ?? 1, 1), 8)
         timing = parsed.timing ?? ""
         daysText = parsed.days.map { String($0) } ?? ""
         reason = parsed.reason ?? ""
         notes = parsed.notes ?? ""
+        schedule = TimingInterpreter.interpret(
+            timing: parsed.timing,
+            timesPerDay: parsed.timesPerDay,
+            intervalHours: parsed.intervalHours,
+            now: now,
+            calendar: calendar
+        )
+    }
+
+    /// 수동 입력용 빈 초안.
+    init(now: Date = .now, calendar: Calendar = .current) {
+        name = ""
+        dosage = ""
+        timing = ""
+        daysText = ""
+        reason = ""
+        notes = ""
+        schedule = DoseScheduleDraft()
+        schedule.firstDoseMinutes = MinuteOfDay.roundedUpMinutes(from: now, calendar: calendar)
+    }
+
+    var totalDays: Int? {
+        guard let days = Int(daysText.trimmingCharacters(in: .whitespaces)), days > 0 else { return nil }
+        return days
     }
 }
 
@@ -152,18 +183,19 @@ enum PrescriptionImporter {
         return formatter.date(from: text)
     }
 
+    /// 초안을 Medication 으로 만든다. `start` 는 실제 투약 시작 시점(시각 지정 모드면 최초 투약 시각 포함).
     static func makeMedication(
         from draft: MedicationDraft,
         prescribedDate: Date,
-        startDate: Date,
+        start: Date,
         prescriber: String,
         calendar: Calendar = .current
     ) -> Medication {
-        let start = calendar.startOfDay(for: startDate)
         var end: Date?
-        if let days = Int(draft.daysText.trimmingCharacters(in: .whitespaces)), days > 0 {
-            end = calendar.date(byAdding: .day, value: days - 1, to: start)
+        if let days = draft.totalDays {
+            end = calendar.date(byAdding: .day, value: days - 1, to: calendar.startOfDay(for: start))
         }
+        let timing = draft.timing.trimmingCharacters(in: .whitespacesAndNewlines)
         return Medication(
             name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
             dosage: draft.dosage.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -174,7 +206,8 @@ enum PrescriptionImporter {
             notes: draft.notes,
             prescribedDate: prescribedDate,
             prescriber: prescriber.trimmingCharacters(in: .whitespacesAndNewlines),
-            timingNote: draft.timing.trimmingCharacters(in: .whitespacesAndNewlines)
+            timingNote: timing.isEmpty ? draft.schedule.summary : timing,
+            slots: draft.schedule.makeSlots()
         )
     }
 }

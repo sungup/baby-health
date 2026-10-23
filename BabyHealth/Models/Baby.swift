@@ -9,6 +9,14 @@ final class Baby {
     var birthDate: Date
     var createdAt: Date
 
+    /// 식사/취침 시간 (자정 기준 분). 식사 기준 투약 알람의 기준점.
+    var breakfastMinutes: Int
+    var lunchMinutes: Int
+    var dinnerMinutes: Int
+    var bedtimeMinutes: Int
+    var mealAlarmsEnabled: Bool
+    var medicationAlarmsEnabled: Bool
+
     @Relationship(deleteRule: .cascade, inverse: \Vaccination.baby)
     var vaccinations: [Vaccination] = []
 
@@ -26,6 +34,21 @@ final class Baby {
         self.name = name
         self.birthDate = birthDate
         self.createdAt = createdAt
+        self.breakfastMinutes = 8 * 60
+        self.lunchMinutes = 12 * 60
+        self.dinnerMinutes = 18 * 60
+        self.bedtimeMinutes = 21 * 60
+        self.mealAlarmsEnabled = true
+        self.medicationAlarmsEnabled = true
+    }
+
+    func minutes(for anchor: DoseAnchor) -> Int {
+        switch anchor {
+        case .breakfast: return breakfastMinutes
+        case .lunch: return lunchMinutes
+        case .dinner: return dinnerMinutes
+        case .bedtime: return bedtimeMinutes
+        }
     }
 
     /// 만 개월 수 (생후 개월).
