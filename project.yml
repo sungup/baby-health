@@ -1,0 +1,52 @@
+name: BabyHealth
+options:
+  bundleIdPrefix: com.sungup
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  developmentLanguage: ko
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1,2" # 1 = iPhone, 2 = iPad
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # 맥에서 Xcode > Signing & Capabilities 에서 본인 Team을 선택하세요.
+    # DEVELOPMENT_TEAM: XXXXXXXXXX
+
+targets:
+  BabyHealth:
+    type: application
+    platform: iOS
+    sources:
+      - path: BabyHealth
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sungup.babyhealth
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: 아기 건강
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+
+  BabyHealthTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: BabyHealthTests
+    dependencies:
+      - target: BabyHealth
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sungup.babyhealth.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  BabyHealth:
+    build:
+      targets:
+        BabyHealth: all
+    test:
+      targets:
+        - BabyHealthTests

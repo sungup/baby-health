@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# XcodeGen 이 생성하는 프로젝트 파일 (project.yml 이 원본)
+*.xcodeproj
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# 비밀 값 (절대 커밋하지 않기)
+.env
+*.p12
+*.mobileprovision
+Secrets.xcconfig

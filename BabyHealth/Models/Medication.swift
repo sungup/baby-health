@@ -1,0 +1,59 @@
+import Foundation
+import SwiftData
+
+@Model
+final class Medication {
+    var name: String
+    /// 1회 용량 (예: "2.5ml"). 단위가 제각각이라 문자열로 보관한다.
+    var dosage: String
+    var timesPerDay: Int
+    var startDate: Date
+    var endDate: Date?
+    var reason: String
+    var notes: String
+    var baby: Baby?
+
+    @Relationship(deleteRule: .cascade, inverse: \MedicationDose.medication)
+    var doses: [MedicationDose] = []
+
+    init(
+        name: String,
+        dosage: String,
+        timesPerDay: Int,
+        startDate: Date,
+        endDate: Date? = nil,
+        reason: String = "",
+        notes: String = ""
+    ) {
+        self.name = name
+        self.dosage = dosage
+        self.timesPerDay = timesPerDay
+        self.startDate = startDate
+        self.endDate = endDate
+        self.reason = reason
+        self.notes = notes
+    }
+
+    func isActive(asOf now: Date = .now, calendar: Calendar = .current) -> Bool {
+        let today = calendar.startOfDay(for: now)
+        guard calendar.startOfDay(for: startDate) <= today else { return false }
+        if let endDate {
+            return calendar.startOfDay(for: endDate) >= today
+        }
+        return true
+    }
+
+    func doseCount(on day: Date, calendar: Calendar = .current) -> Int {
+        doses.filter { calendar.isDate($0.takenAt, inSameDayAs: day) }.count
+    }
+}
+
+@Model
+final class MedicationDose {
+    var takenAt: Date
+    var medication: Medication?
+
+    init(takenAt: Date = .now) {
+        self.takenAt = takenAt
+    }
+}
