@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+/// 처방받은 약 한 건. 복용 기록은 `doses` 로 쌓는다.
 @Model
 final class Medication {
     var name: String
@@ -11,6 +12,10 @@ final class Medication {
     var endDate: Date?
     var reason: String
     var notes: String
+    /// 처방받은 날짜.
+    var prescribedDate: Date
+    /// 처방한 병원/의사 (선택).
+    var prescriber: String
     var baby: Baby?
 
     @Relationship(deleteRule: .cascade, inverse: \MedicationDose.medication)
@@ -23,7 +28,9 @@ final class Medication {
         startDate: Date,
         endDate: Date? = nil,
         reason: String = "",
-        notes: String = ""
+        notes: String = "",
+        prescribedDate: Date = .now,
+        prescriber: String = ""
     ) {
         self.name = name
         self.dosage = dosage
@@ -32,6 +39,8 @@ final class Medication {
         self.endDate = endDate
         self.reason = reason
         self.notes = notes
+        self.prescribedDate = prescribedDate
+        self.prescriber = prescriber
     }
 
     func isActive(asOf now: Date = .now, calendar: Calendar = .current) -> Bool {
@@ -51,9 +60,11 @@ final class Medication {
 @Model
 final class MedicationDose {
     var takenAt: Date
+    var notes: String
     var medication: Medication?
 
-    init(takenAt: Date = .now) {
+    init(takenAt: Date = .now, notes: String = "") {
         self.takenAt = takenAt
+        self.notes = notes
     }
 }

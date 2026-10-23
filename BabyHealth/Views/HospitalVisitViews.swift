@@ -52,6 +52,9 @@ struct HospitalVisitListView: View {
             }
             .navigationTitle("병원")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    BabySwitcherMenu()
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAdd = true

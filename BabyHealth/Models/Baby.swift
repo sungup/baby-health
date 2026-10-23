@@ -3,6 +3,8 @@ import SwiftData
 
 @Model
 final class Baby {
+    /// 선택된 아기를 저장(AppStorage)하기 위한 안정적인 식별자.
+    var uuid: UUID
     var name: String
     var birthDate: Date
     var createdAt: Date
@@ -19,7 +21,8 @@ final class Baby {
     @Relationship(deleteRule: .cascade, inverse: \TemperatureRecord.baby)
     var temperatures: [TemperatureRecord] = []
 
-    init(name: String, birthDate: Date, createdAt: Date = .now) {
+    init(name: String, birthDate: Date, createdAt: Date = .now, uuid: UUID = UUID()) {
+        self.uuid = uuid
         self.name = name
         self.birthDate = birthDate
         self.createdAt = createdAt

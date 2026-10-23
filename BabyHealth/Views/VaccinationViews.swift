@@ -43,6 +43,9 @@ struct VaccinationListView: View {
             }
             .navigationTitle("접종")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    BabySwitcherMenu()
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAdd = true

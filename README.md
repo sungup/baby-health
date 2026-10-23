@@ -16,6 +16,13 @@ open BabyHealth.xcodeproj
 Xcode의 Signing & Capabilities에서 Team을 선택한 뒤 실행합니다.
 파일을 추가/삭제하거나 `project.yml`을 바꿨다면 `xcodegen generate`를 다시 실행하세요.
 
+## 기능
+
+- 아기 등록 / 수정 / 삭제, 여러 아기 중 선택 (각 탭 왼쪽 위 메뉴)
+- 요약: 아기 정보, 최근 체온, 진행 중인 투약(오늘 복용 현황), 다음 접종, 최근 병원 방문
+- 체온 입력, 처방(약 이름·용량·횟수·처방일·처방 병원·기간) 입력, 투약 기록 입력
+- 접종 / 병원 방문 기록
+
 ## LLM 점검
 
 요약 탭의 열쇠 버튼에서 Anthropic API 키를 입력하면 Keychain에 저장되고, "지금 점검하기"에서 사용됩니다.

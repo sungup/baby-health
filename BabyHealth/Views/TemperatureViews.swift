@@ -51,6 +51,9 @@ struct TemperatureListView: View {
             }
             .navigationTitle("체온")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    BabySwitcherMenu()
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAdd = true
