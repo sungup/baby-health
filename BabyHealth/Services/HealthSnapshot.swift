@@ -29,6 +29,7 @@ struct HealthSnapshot: Equatable {
         let startDate: Date
         let endDate: Date?
         let dosesTakenToday: Int
+        var timingNote: String = ""
     }
 
     let generatedAt: Date
@@ -82,7 +83,8 @@ extension HealthSnapshot {
                         timesPerDay: $0.timesPerDay,
                         startDate: $0.startDate,
                         endDate: $0.endDate,
-                        dosesTakenToday: $0.doseCount(on: now, calendar: calendar)
+                        dosesTakenToday: $0.doseCount(on: now, calendar: calendar),
+                        timingNote: $0.timingNote
                     )
                 }
         )

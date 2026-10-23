@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 private enum MedicationSheet: Identifiable {
+    case scanPrescription
     case addPrescription
     case addDose
 
@@ -52,7 +53,7 @@ struct MedicationListView: View {
                     ContentUnavailableView(
                         "처방 기록이 없습니다",
                         systemImage: "pills",
-                        description: Text("오른쪽 위 + 버튼에서 처방을 추가하세요.")
+                        description: Text("오른쪽 위 + 버튼에서 처방전을 촬영하거나 직접 입력하세요.")
                     )
                 }
             }
@@ -64,9 +65,14 @@ struct MedicationListView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button {
+                            activeSheet = .scanPrescription
+                        } label: {
+                            Label("처방전 촬영·인식", systemImage: "camera.viewfinder")
+                        }
+                        Button {
                             activeSheet = .addPrescription
                         } label: {
-                            Label("처방 추가", systemImage: "doc.badge.plus")
+                            Label("처방 직접 입력", systemImage: "square.and.pencil")
                         }
                         Button {
                             activeSheet = .addDose
@@ -80,6 +86,8 @@ struct MedicationListView: View {
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
+                case .scanPrescription:
+                    PrescriptionScanView(baby: baby)
                 case .addPrescription:
                     AddMedicationView(baby: baby)
                 case .addDose:
@@ -111,6 +119,11 @@ private struct MedicationRow: View {
             }
             Text("\(medication.dosage) · 하루 \(medication.timesPerDay)회")
                 .font(.subheadline)
+            if !medication.timingNote.isEmpty {
+                Text(medication.timingNote)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
             Text(periodText)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -146,6 +159,9 @@ struct MedicationDetailView: View {
                 LabeledContent("약 이름", value: medication.name)
                 LabeledContent("1회 용량", value: medication.dosage)
                 LabeledContent("횟수", value: "하루 \(medication.timesPerDay)회")
+                if !medication.timingNote.isEmpty {
+                    LabeledContent("복용 시점", value: medication.timingNote)
+                }
                 LabeledContent("처방일", value: medication.prescribedDate.formatted(date: .abbreviated, time: .omitted))
                 if !medication.prescriber.isEmpty {
                     LabeledContent("처방 병원/의사", value: medication.prescriber)
@@ -222,6 +238,7 @@ struct AddMedicationView: View {
     @State private var timesPerDay = 3
     @State private var prescribedDate = Date.now
     @State private var prescriber = ""
+    @State private var timingNote = ""
     @State private var startDate = Date.now
     @State private var hasEndDate = false
     @State private var endDate = Date.now
@@ -245,6 +262,7 @@ struct AddMedicationView: View {
                     TextField("약 이름", text: $name)
                     TextField("1회 용량 (예: 2.5ml)", text: $dosage)
                     Stepper("하루 \(timesPerDay)회", value: $timesPerDay, in: 1...8)
+                    TextField("복용 시점 (예: 아침·저녁 식후)", text: $timingNote)
                 }
                 Section("복용 기간") {
                     DatePicker("시작일", selection: $startDate, displayedComponents: .date)
@@ -281,7 +299,8 @@ struct AddMedicationView: View {
             reason: reason,
             notes: notes,
             prescribedDate: prescribedDate,
-            prescriber: prescriber
+            prescriber: prescriber,
+            timingNote: timingNote.trimmingCharacters(in: .whitespacesAndNewlines)
         )
         context.insert(medication)
         medication.baby = baby

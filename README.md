@@ -22,6 +22,24 @@ Xcode의 Signing & Capabilities에서 Team을 선택한 뒤 실행합니다.
 - 요약: 아기 정보, 최근 체온, 진행 중인 투약(오늘 복용 현황), 다음 접종, 최근 병원 방문
 - 체온 입력, 처방(약 이름·용량·횟수·처방일·처방 병원·기간) 입력, 투약 기록 입력
 - 접종 / 병원 방문 기록
+- **처방전 인식**: 투약 탭 `+` → "처방전 촬영·인식". 카메라(문서 스캐너)로 촬영하거나 사진을 골라 Gemini로 분석하고,
+  약마다 다른 복용 시점·횟수·일수를 검토/수정한 뒤 저장합니다. (이미지는 앱에 저장하지 않음)
+- **모델 선택**: 요약 탭 열쇠 버튼(연동 설정)에서 처방전 인식(Gemini)·현황 점검(Anthropic) 모델을 따로 고르고,
+  "사용 가능한 모델 불러오기"로 현재 계정/키로 쓸 수 있는 목록을 조회하거나 모델 ID를 직접 입력할 수 있습니다.
+
+## Google 계정 연동 설정 (처방전 인식)
+
+1. [Google Cloud Console](https://console.cloud.google.com)에서 프로젝트를 만들고 **Generative Language API**를 사용 설정합니다.
+2. **Google Auth Platform**에서 OAuth 동의 화면을 구성합니다. 사용자 유형은 *외부*, 본인 계정을 **테스트 사용자**로 추가합니다.
+   (테스트 모드에서는 "확인되지 않은 앱" 경고가 뜨는데 정상입니다.)
+3. **클라이언트 만들기** → 유형 **iOS**, 번들 ID `com.sungup.babyhealth` → 발급된 **클라이언트 ID**를 복사합니다.
+4. 앱의 연동 설정에서 클라이언트 ID(선택: Cloud 프로젝트 ID)를 입력하고 **Google 계정 연결**을 누릅니다.
+
+> 요청 scope는 `generative-language.retriever`(Gemini API OAuth 문서 기준)이며 `GoogleOAuthConfig.defaultScopes`에서 바꿀 수 있습니다.
+> 이 scope로 `generateContent`가 허용되는지는 계정/프로젝트 설정에 따라 다를 수 있습니다. 403이 나면 **Gemini API 키**를 함께 저장해 두세요.
+> 앱은 Google 계정 → API 키 순으로 시도하고, 401/403이면 자동으로 다음 방법으로 넘어갑니다.
+>
+> 기본 모델/엔드포인트: `gemini-3.8-flash`, `generateContent` (Gemini 문서에서 Legacy로 표시됨 — `GeminiPrescriptionReader`만 바꾸면 Interactions API로 이전 가능).
 
 ## LLM 점검
 

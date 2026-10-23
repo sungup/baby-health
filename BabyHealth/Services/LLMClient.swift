@@ -27,8 +27,10 @@ enum LLMError: LocalizedError {
 /// Anthropic Messages API 클라이언트.
 /// 개인용 앱 전제로 기기에서 직접 호출한다. 배포용으로 확장할 때는 별도 백엔드 프록시를 두고 키를 앱에 두지 않는다.
 struct AnthropicClient: LLMClient {
+    static let defaultModel = "claude-sonnet-5-5"
+
     let apiKey: String
-    var model: String = "claude-sonnet-5-5"
+    var model: String = AnthropicClient.defaultModel
     var maxTokens: Int = 1024
     var session: URLSession = .shared
 

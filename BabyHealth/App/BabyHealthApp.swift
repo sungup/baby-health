@@ -3,9 +3,12 @@ import SwiftData
 
 @main
 struct BabyHealthApp: App {
+    @StateObject private var googleAuth = GoogleAuthManager()
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(googleAuth)
         }
         .modelContainer(
             for: [

@@ -16,6 +16,8 @@ final class Medication {
     var prescribedDate: Date
     /// 처방한 병원/의사 (선택).
     var prescriber: String
+    /// 복용 시점 메모 (예: "아침·저녁 식후 30분", "취침 전"). 약마다 다를 수 있다.
+    var timingNote: String
     var baby: Baby?
 
     @Relationship(deleteRule: .cascade, inverse: \MedicationDose.medication)
@@ -30,7 +32,8 @@ final class Medication {
         reason: String = "",
         notes: String = "",
         prescribedDate: Date = .now,
-        prescriber: String = ""
+        prescriber: String = "",
+        timingNote: String = ""
     ) {
         self.name = name
         self.dosage = dosage
@@ -41,6 +44,7 @@ final class Medication {
         self.notes = notes
         self.prescribedDate = prescribedDate
         self.prescriber = prescriber
+        self.timingNote = timingNote
     }
 
     func isActive(asOf now: Date = .now, calendar: Calendar = .current) -> Bool {

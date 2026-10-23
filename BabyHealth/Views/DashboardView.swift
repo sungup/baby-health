@@ -14,6 +14,7 @@ struct DashboardView: View {
     @State private var result: HealthCheckResult?
     @State private var isRunning = false
     @State private var activeSheet: DashboardSheet?
+    @AppStorage(SettingsKey.anthropicModel) private var anthropicModel = AnthropicClient.defaultModel
 
     private var latestTemperature: TemperatureRecord? {
         baby.temperatures.max { $0.measuredAt < $1.measuredAt }
@@ -72,7 +73,7 @@ struct DashboardView: View {
                 case .dose:
                     AddMedicationDoseView(baby: baby)
                 case .apiKey:
-                    APIKeySettingsView()
+                    ConnectionSettingsView()
                 }
             }
         }
@@ -129,7 +130,9 @@ struct DashboardView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(medication.name)
-                        Text("\(medication.dosage) · 하루 \(medication.timesPerDay)회")
+                        Text(medication.timingNote.isEmpty
+                             ? "\(medication.dosage) · 하루 \(medication.timesPerDay)회"
+                             : "\(medication.dosage) · \(medication.timingNote)")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -237,7 +240,8 @@ struct DashboardView: View {
         isRunning = true
         let snapshot = HealthSnapshot(baby: baby)
         let key = KeychainStore.read(account: SecretAccount.anthropicAPIKey) ?? ""
-        let client: LLMClient? = key.isEmpty ? nil : AnthropicClient(apiKey: key)
+        let model = ModelCatalog.effective(anthropicModel, default: AnthropicClient.defaultModel)
+        let client: LLMClient? = key.isEmpty ? nil : AnthropicClient(apiKey: key, model: model)
 
         Task {
             let outcome = await HealthCheckService(client: client).run(snapshot: snapshot)

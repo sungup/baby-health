@@ -57,8 +57,9 @@ enum HealthSummaryBuilder {
         }
         for medicine in snapshot.medications {
             let end = medicine.endDate.map { format($0) } ?? "종료일 미정"
+            let timing = medicine.timingNote.isEmpty ? "" : " (\(medicine.timingNote))"
             lines.append(
-                "- \(medicine.name) \(medicine.dosage) 하루 \(medicine.timesPerDay)회 / \(format(medicine.startDate)) ~ \(end) / 오늘 \(medicine.dosesTakenToday)회 복용"
+                "- \(medicine.name) \(medicine.dosage) 하루 \(medicine.timesPerDay)회\(timing) / \(format(medicine.startDate)) ~ \(end) / 오늘 \(medicine.dosesTakenToday)회 복용"
             )
         }
 
